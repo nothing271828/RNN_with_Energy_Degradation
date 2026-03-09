@@ -5,6 +5,9 @@ from sympy.physics.units import length
 
 
 class DyckNTaskEnvironment:
+    """
+    环境类。尚未更新，从之前的项目直接复制的
+    """
     def __init__(self, device):
         self.device = device
         self.vocabulary = {}

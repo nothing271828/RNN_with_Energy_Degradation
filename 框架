@@ -1,0 +1,120 @@
+这是一个非常成熟的工程思维。在深度学习框架中实现这类包含“能量极小化”和“隐式求导”的非标准网络，最核心的设计原则就是**解耦（Decoupling）**：把能量函数的物理/数学定义、前向寻找极小值的寻优过程、以及反向传递梯度的自定义 Autograd 过程完全剥离开来。
+
+结合你提到的 Replay Buffer（这暗示了你的训练架构可能带有强化学习、经验回放或基于能量的序列采样的性质），我为你规划了以下 **5 个核心类**的框架。
+
+这套框架利用了 PyTorch 的 `nn.Module` 和自定义 `torch.autograd.Function` 的特性，你可以直接把这个框架作为后续填空的基础。
+
+---
+
+### 1. `EnergyModel` 类 (继承自 `torch.nn.Module`)
+
+**功能定位：** 纯粹的数学定义层。它只负责实现能量函数 $E(h_t, h_{t-1}, x_t; \theta)$ 以及输出函数 $y_t = \phi_{out}(h_t)$ 。它不包含任何循环或求导逻辑。
+
+* **`__init__(self, input_dim, hidden_dim, output_dim, ...)`**
+*
+**功能：** 初始化网络的权重参数 $\theta$ （如线性层、嵌入层等）。
+
+
+
+
+* **`compute_energy(self, h_current, h_prev, x_t)`**
+* **功能：** 计算给定状态下的标量能量值。
+*
+**输入：** `h_current` (当前时刻隐变量预估值), `h_prev` (上一时刻隐变量), `x_t` (当前输入) 。
+
+
+* **输出：** `energy` (一个 batch 的能量标量)。
+
+
+* **`readout(self, h_current)`**
+*
+**功能：** 实现网络读出 $\phi_{out}$，将隐状态映射为预测输出 。
+
+
+* **输入：** `h_current`。
+* **输出：** `y_t` (预测值)。
+
+
+
+### 2. `EnergyMinimizer` 类 (工具类 / Functional)
+
+**功能定位：** 前向求解器。它的唯一任务就是实现 $h_{t} = \text{argmin}_s E(s, h_{t-1}, x_{t}; \theta)$ 这个寻优过程 。
+
+* **`__init__(self, energy_model, max_iters, tol, ...)`**
+* **功能：** 绑定能量模型，并设置寻优超参数（如最大迭代次数、收敛容差，或是郎之万动力学的步长和噪声系数）。
+
+
+* **`solve(self, h_prev, x_t, h_init_guess)`**
+* **功能：** 给定上一时刻状态和当前输入，通过内部迭代（如梯度下降等迭代算法），寻找使能量最小的 $h_t$。
+* **输入：** `h_prev`, `x_t`, `h_init_guess` (当前状态的初值猜测，可以用 $h_{t-1}$ 作为热启动)。
+* **输出：** `h_optimal` (处于能量极小值点、且**脱离计算图**的张量，用于前向传播)。
+
+
+
+### 3. `ImplicitRNNStep` 类 (继承自 `torch.autograd.Function`)
+
+**功能定位：** 核心数学引擎（反向传播拦截器）。这是连接工程与你推导公式的地方，**你的海森矩阵处理算法将填补在这里**。它伪装成一个前向计算节点，实际上是为了在反向时注入你的隐函数定理公式 。
+
+* **`forward(ctx, energy_model, h_optimal, h_prev, x_t, *theta_params)`**
+* **功能：** PyTorch 的前向传递。在这里不进行寻优（寻优在外面做完了），只负责把参与反向计算的张量保存下来。
+* **输入：** 寻优得到的 `h_optimal`，以及环境状态 `h_prev`, `x_t`，和所有网络参数。
+* **输出：** 直接返回 `h_optimal`，但此时它带上了自定义的梯度回调函数。
+* **Context操作：** `ctx.save_for_backward(...)` 缓存这些张量。
+
+
+* **`backward(ctx, grad_h_optimal)`**
+*
+**功能：** **（占位符）** 接收来自未来时间步或 Loss 的梯度 `grad_h_optimal` ($a_t$)，利用公式 $\frac{\partial h_t}{\partial \theta} = -(\frac{\partial^2 E_t}{\partial h_t^2})^{-1} [\dots]$ 计算并返回对 `h_prev` 和 $\theta$ 的梯度 。
+
+
+* **输入：** `grad_h_optimal` (即你公式推导中的误差传递)。
+* **输出：** 返回一个元组，分别是关于 `h_prev`, `x_t` 和 `theta_params` 的梯度。在这里你可以调用近似海森矩阵求逆的子函数。
+
+
+
+### 4. `ImplicitEnergyRNN` 类 (继承自 `torch.nn.Module`)
+
+**功能定位：** 高层包装器。负责在时间轴上展开序列，将前向求解与反向自定义 Autograd 串联起来，提供对外的标准 RNN 接口。
+
+* **`__init__(self, energy_model, minimizer)`**
+* **功能：** 接收实例化的能量模型和求解器。
+
+
+* **`forward(self, x_sequence, h_0)`**
+* **功能：** 遍历时间步。在每个时间步 $t$：
+1. 调用 `minimizer.solve()` 得到数值上的 $h_t$ 。
+
+
+2. 调用 `ImplicitRNNStep.apply(...)` 将数值 $h_t$ 重新挂载到带有自定义梯度的计算图上。
+3. 记录结果并进入下一步。
+
+
+* **输入：** `x_sequence` (整个输入序列 $x_1, \dots, x_T$), `h_0` (初始隐变量)。
+* **输出：** `h_sequence` (所有时间步的隐状态集合), `y_sequence` (网络读出序列)。
+
+
+
+### 5. `TrajectoryReplayBuffer` 类 (工具类)
+
+**功能定位：** 数据管理。如果你的算法涉及对历史状态序列的截断采样或无监督强化学习迭代，这个类用于打破时间相关性并提供批次数据。
+
+* **`__init__(self, capacity)`**
+* **功能：** 初始化队列或预分配显存。
+
+
+* **`push(self, transition_tuple)`**
+* **功能：** 存入经历过的一个片段，通常元组包含 `(x_t, h_{t-1}, h_t, y_t, loss/reward)`。
+
+
+* **`sample(self, batch_size)`**
+* **功能：** 随机抽取一批 transition 或连续的 sequence 块，供离线计算隐函数梯度更新使用。
+* **输出：** 打包好的 PyTorch Tensors。
+
+
+
+---
+
+**工作流闭环示例：**
+在外部训练循环中，你将一段序列投入 `ImplicitEnergyRNN`。RNN 内部在每个时间步会呼叫 `EnergyMinimizer` 找到极小值，并用 `ImplicitRNNStep` 包装。最终网络输出计算出 $Loss$ 后 ，你只需要极其平常地调用 `Loss.backward()`。PyTorch 会自动触发你写在 `ImplicitRNNStep.backward` 中的海森矩阵占位函数，完美实现你推导的公式 (8) 。
+
+这样的架构设计是否清晰？你可以先在这个框架内搭起空函数，接下来我们再针对 `ImplicitRNNStep.backward` 探讨怎么把那个复杂的逆矩阵算法填进去。
