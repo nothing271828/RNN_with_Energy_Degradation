@@ -1,0 +1,48 @@
+\documentclass[UTF8]{ctexart}   % UTF8 编码，使用 ctex 内置字体
+\usepackage{geometry}           % 设置页面边距
+\usepackage{graphicx}            % 插入图片
+\usepackage{amsmath, amssymb}    % 数学公式
+\usepackage{hyperref}            % 超链接
+
+\geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+\newcommand{\ptl}[2]{\frac{\partial #1}{\partial #2}}
+
+\begin{document}
+
+\section{推导}
+设RNN网络的迭代公式为：
+\begin{equation}
+    h_{t+1} = \underset{s}{argmin}~E(s, h_t, x_t;\theta)
+\end{equation}
+其中：
+\begin{itemize}
+    \item $h_t$为t时刻的隐变量
+    \item E为系统的能量函数
+    \item $x_t$为系统t时刻的输入
+    \item $\theta$为系统的可训练参数
+\end{itemize}
+
+记RNN网络的读出和误差为：
+\begin{align}
+    &y_t = \phi_{out}(h_t)\\
+    &Loss = L(y_t, \hat{y}_t)
+\end{align}
+
+则损失函数关于$\theta$的导数为：
+\begin{equation}
+    \frac{\partial L}{\partial \theta} = \frac{\partial L}{\partial y_t} \phi_{out}'(h_t) \frac{\partial h_t}{\partial \theta}
+\end{equation}
+记$E_t := E(h_t, h_{t-1}, x_t;\theta)$,则有:
+\begin{equation}
+    \ptl{E_t}{h_t} = 0
+\end{equation}
+上式对$\theta$ 求全导数可得：
+\begin{equation}
+    0 = \ptl{^2 E_t}{h_t^2} \ptl{h_t}{\theta} + \ptl{^2 E_t}{h_t \partial \theta} + \ptl{^2E_t}{h_t \partial h_{t-1}} \ptl{h_{t-1}}{\theta}
+\end{equation}
+\begin{equation}
+    \ptl{h_t}{\theta} = -\left(\ptl{^2 E_\theta}{h_t^2}\right)^{-1} \left[\ptl{^2 E_t}{h_t \partial \theta} + \ptl{^2 E_t}{h_t \partial h_{t-1}} \ptl{h_{t-1}}{\theta}\right]
+\end{equation}
+
+\end{document}
