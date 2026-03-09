@@ -42,7 +42,25 @@
     0 = \ptl{^2 E_t}{h_t^2} \ptl{h_t}{\theta} + \ptl{^2 E_t}{h_t \partial \theta} + \ptl{^2E_t}{h_t \partial h_{t-1}} \ptl{h_{t-1}}{\theta}
 \end{equation}
 \begin{equation}
-    \ptl{h_t}{\theta} = -\left(\ptl{^2 E_\theta}{h_t^2}\right)^{-1} \left[\ptl{^2 E_t}{h_t \partial \theta} + \ptl{^2 E_t}{h_t \partial h_{t-1}} \ptl{h_{t-1}}{\theta}\right]
+    \ptl{h_t}{\theta} = -\left(\ptl{^2 E_t}{h_t^2}\right)^{-1} \left[\ptl{^2 E_t}{h_t \partial \theta} + \ptl{^2 E_t}{h_t \partial h_{t-1}} \ptl{h_{t-1}}{\theta}\right]
 \end{equation}
 
+我们定义：
+\begin{align}
+    A_t &:= -\left(\ptl{^2 E_t}{h_t^2}\right)^{-1}\\
+    B_t &:= \ptl{^2 E_t}{h_t \partial \theta}\\
+    C_t &:= \ptl{^2 E_t}{h_t \partial h_{t-1}}\\
+\end{align}
+
+则有：
+\begin{equation}
+    \ptl{h_t}{\theta} = A_t B_t + A_t C_t \ptl{h_{t-1}}{\theta}
+\end{equation}
+
+假设初态隐变量为$h_0$, 末态为T时刻对应隐状态$h_T$, 则反复利用上式可得：
+\begin{equation}
+    \begin{aligned}
+        \ptl{L}{\theta} = 
+    \end{aligned}
+\end{equation}
 \end{document}
