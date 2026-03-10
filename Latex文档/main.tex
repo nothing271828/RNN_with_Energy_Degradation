@@ -26,12 +26,12 @@
 记RNN网络的读出和误差为：
 \begin{align}
     &y_t = \phi_{out}(h_t)\\
-    &Loss = L(y_t, \hat{y}_t)
+    &Loss = L_t(y_t, \hat{y}_t)
 \end{align}
 
 则损失函数关于$\theta$的导数为：
 \begin{equation}
-    \frac{\partial L}{\partial \theta} = \frac{\partial L}{\partial y_t} \phi_{out}'(h_t) \frac{\partial h_t}{\partial \theta}
+    \frac{\partial L_t}{\partial \theta} = \frac{\partial L_t}{\partial y_t} \phi_{out}'(h_t) \frac{\partial h_t}{\partial \theta}
 \end{equation}
 记$E_t := E(h_t, h_{t-1}, x_t;\theta)$,则有:
 \begin{equation}
@@ -57,10 +57,22 @@
     \ptl{h_t}{\theta} = A_t B_t + A_t C_t \ptl{h_{t-1}}{\theta}
 \end{equation}
 
-假设初态隐变量为$h_0$, 末态为T时刻对应隐状态$h_T$, 则反复利用上式可得：
+假设初态隐变量为$h_0$, 反复利用上式可得：
 \begin{equation}
     \begin{aligned}
-        \ptl{L}{\theta} = 
+        \ptl{h_t}{\theta} &= A_t B_t + A_t C_t A_{t-1} B_{t-1} + A_t C_t A_{t-1} C_{t-1} \ptl{h_{t-2}}{\theta}\\
+        &= \dots \\
+        &= A_t B_t + \sum_{k=1}^{n} \left[ \left(\prod_{l=0}^{k-1}A_{t-l} C_{t-l}\right) A_{t-k}B_{t-k}\right] + \left(\prod_{l=0}^{n} A_{t-l} C_{t-l}\right) \ptl{h_{t-n}}{\theta}\\
+        &=  A_t B_t + \sum_{k=1}^{t} \left[ \left(\prod_{l=0}^{k-1}A_{t-l} C_{t-l}\right) A_{t-k}B_{t-k}\right] 
     \end{aligned}
 \end{equation}
+
+然而考虑到$A_t$, $B_t$, $C_t$均为一个庞大的矩阵，直接计算上式太浪费算力和内存，我们考虑下式：
+\begin{equation}
+    \begin{aligned}
+        \ptl{L_t}{\theta} &= \frac{\partial L_t}{\partial y_t} \phi_{out}'(h_t) \frac{\partial h_t}{\partial \theta}:= v_t \ptl{h_t}{\theta} \\
+        &=
+    \end{aligned}
+\end{equation}
+
 \end{document}
