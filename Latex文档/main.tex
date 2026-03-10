@@ -10,69 +10,121 @@
 
 \begin{document}
 
-\section{推导}
-设RNN网络的迭代公式为：
-\begin{equation}
-    h_{t+1} = \underset{s}{argmin}~E(s, h_t, x_t;\theta)
-\end{equation}
-其中：
-\begin{itemize}
-    \item $h_t$为t时刻的隐变量
-    \item E为系统的能量函数
-    \item $x_t$为系统t时刻的输入
-    \item $\theta$为系统的可训练参数
-\end{itemize}
+\section{RNN网络}
 
-记RNN网络的读出和误差为：
-\begin{align}
-    &y_t = \phi_{out}(h_t)\\
-    &Loss = L_t(y_t, \hat{y}_t)
-\end{align}
+    \subsection{理论推导}
+        设RNN网络的迭代公式为：
+        \begin{equation}
+            h_{t+1} = \underset{s}{argmin}~E(s, h_t, x_t;\theta)
+        \end{equation}
+        其中：
+        \begin{itemize}
+            \item $h_t$为t时刻的隐变量
+            \item E为系统的能量函数
+            \item $x_t$为系统t时刻的输入
+            \item $\theta$为系统的可训练参数
+        \end{itemize}
 
-则损失函数关于$\theta$的导数为：
-\begin{equation}
-    \frac{\partial L_t}{\partial \theta} = \frac{\partial L_t}{\partial y_t} \phi_{out}'(h_t) \frac{\partial h_t}{\partial \theta}
-\end{equation}
-记$E_t := E(h_t, h_{t-1}, x_t;\theta)$,则有:
-\begin{equation}
-    \ptl{E_t}{h_t} = 0
-\end{equation}
-上式对$\theta$ 求全导数可得：
-\begin{equation}
-    0 = \ptl{^2 E_t}{h_t^2} \ptl{h_t}{\theta} + \ptl{^2 E_t}{h_t \partial \theta} + \ptl{^2E_t}{h_t \partial h_{t-1}} \ptl{h_{t-1}}{\theta}
-\end{equation}
-\begin{equation}
-    \ptl{h_t}{\theta} = -\left(\ptl{^2 E_t}{h_t^2}\right)^{-1} \left[\ptl{^2 E_t}{h_t \partial \theta} + \ptl{^2 E_t}{h_t \partial h_{t-1}} \ptl{h_{t-1}}{\theta}\right]
-\end{equation}
+        记RNN网络的读出和误差为：
+        \begin{align}
+            &y_t = \phi_{out}(h_t)\\
+            &Loss = L_t(y_t, \hat{y}_t)
+        \end{align}
 
-我们定义：
-\begin{align}
-    A_t &:= -\left(\ptl{^2 E_t}{h_t^2}\right)^{-1}\\
-    B_t &:= \ptl{^2 E_t}{h_t \partial \theta}\\
-    C_t &:= \ptl{^2 E_t}{h_t \partial h_{t-1}}\\
-\end{align}
+        记$E_t := E(h_t, h_{t-1}, x_t;\theta)$,则有:
+        \begin{equation}
+            g_t(h_t, h_{t-1};\theta) := \ptl{E_t}{h_t} = \mathbf{0}。
+        \end{equation}
 
-则有：
-\begin{equation}
-    \ptl{h_t}{\theta} = A_t B_t + A_t C_t \ptl{h_{t-1}}{\theta}
-\end{equation}
+        上式取全微分可得：
+        \begin{equation}
+            0 = \ptl{^2 E_t}{h_t^2} dh_t + \ptl{^2E_t}{h_t \partial h_{t-1}} dh_{t-1} + \ptl{^2 E_t}{h_t \partial \theta} d\theta
+        \end{equation}
 
-假设初态隐变量为$h_0$, 反复利用上式可得：
-\begin{equation}
-    \begin{aligned}
-        \ptl{h_t}{\theta} &= A_t B_t + A_t C_t A_{t-1} B_{t-1} + A_t C_t A_{t-1} C_{t-1} \ptl{h_{t-2}}{\theta}\\
-        &= \dots \\
-        &= A_t B_t + \sum_{k=1}^{n} \left[ \left(\prod_{l=0}^{k-1}A_{t-l} C_{t-l}\right) A_{t-k}B_{t-k}\right] + \left(\prod_{l=0}^{n} A_{t-l} C_{t-l}\right) \ptl{h_{t-n}}{\theta}\\
-        &=  A_t B_t + \sum_{k=1}^{t} \left[ \left(\prod_{l=0}^{k-1}A_{t-l} C_{t-l}\right) A_{t-k}B_{t-k}\right] 
-    \end{aligned}
-\end{equation}
+        我们定义：
+        \begin{align}
+            A_t &:= -\left(\ptl{^2 E_t}{h_t^2}\right)^{-1}\\
+            B_t &:= \ptl{^2 E_t}{h_t \partial h_{t-1}}\\
+            d_\theta g_t &:= \ptl{^2 E_t}{h_t \partial \theta} d\theta\\
+        \end{align}
 
-然而考虑到$A_t$, $B_t$, $C_t$均为一个庞大的矩阵，直接计算上式太浪费算力和内存，我们考虑下式：
-\begin{equation}
-    \begin{aligned}
-        \ptl{L_t}{\theta} &= \frac{\partial L_t}{\partial y_t} \phi_{out}'(h_t) \frac{\partial h_t}{\partial \theta}:= v_t \ptl{h_t}{\theta} \\
-        &=
-    \end{aligned}
-\end{equation}
+        则有：
+        \begin{equation}
+            dh_t = A_t B_t dh_{t-1} + A_t d_\theta g_t
+        \end{equation}
+
+        损失函数的全微分为：
+        \begin{align}
+            dL_t &= \ptl{L_t}{y_t} dy_t = \ptl{L_t}{y_t} \phi_{out}'(h_t) dh_t \\
+            &:= v_t^T dh_t \\
+            &= v_t^T A_t d_\theta g_t + v_t^T A_t B_t dh_{t-1}
+        \end{align}
+
+        对于任意给定的时刻$\tau$，我们定义如下伴随向量：
+        \begin{align}
+            p_\tau^T &:= v_\tau^T A_\tau \\
+            p_{t-1}^T &:=p_\tau^T B_t A_{t-1}
+        \end{align}
+        则有：
+        \begin{equation}
+            \begin{aligned}
+                dL_\tau &= p_\tau^T d_\theta g_\tau + p_\tau^T B_\tau dh_{\tau-1} \\
+                &= p_\tau^T d_\theta g_\tau + p_\tau^T B_\tau A_{\tau-1} d_\theta g_{\tau-1} + p_\tau^T B_\tau A_{\tau-1} B_{\tau-1} dh_{\tau-2} \\
+                &= p_\tau^T d_\theta g_\tau + p_{\tau-1}^T d_\theta g_{\tau-1} + p_{\tau-1}^T B_{\tau-1} dh_{\tau-2} \\
+                &\dots \\
+                &= \sum_{t=1}^{\tau} p_t^T d_\theta g_{t}
+            \end{aligned}
+        \end{equation}
+        从而损失函数关于$\theta$的梯度为：
+        \begin{equation}
+            \label{eq:1}
+            \frac{\partial L_\tau}{\partial \theta} = \sum_{t=1}^{\tau} \left( \frac{\partial g_t}{\partial \theta} \right)^T p_t = \sum_{t=1}^{\tau} \left(\ptl{^2 E_t}{h_t \partial \theta}\right)^T p_t
+        \end{equation}
+
+    \subsection{算法概述}
+        \paragraph{向前传播}
+        利用优化器求解$h_t = argmin~E(h_t, h_{t-1}, x_t; \theta)$，并保存$h_t$
+        \paragraph{损失计算}
+        根据当前输出计算损失$Loss = L_\tau(y_\tau, \bar{y}_\tau)$， 然后计算列向量$v_\tau$：
+        \begin{equation}
+            v_\tau = \left( \frac{\partial L_\tau}{\partial y_\tau} \phi_{out}^{\prime}(h_\tau) \right)^T
+        \end{equation}
+        \paragraph{反向传播}
+        为了计算\ref{eq:1}，我们从末时刻($t = \tau$)向初时刻($t = 1$)计算，并且分为如下两步：
+        \begin{enumerate}
+            \item \textbf{$p_t$计算}：
+                \begin{enumerate}
+                    \item 当$t = \tau$时，根据线性方程\footnote{$\left(\ptl{^2 E_t}{h_t^2}\right)^{-1}$为对称矩阵，转置等于其本身}
+                        \begin{equation}
+                            \left(\ptl{^2 E_\tau}{h_\tau^2}\right) p_\tau = -v_\tau
+                        \end{equation}
+                        解出$p_\tau$
+                    \item 当$t < \tau$时，根据线性方程：
+                        \begin{equation}
+                            \left(\ptl{^2 E_t}{h_t^2}\right) p_t = \left(\ptl{E_{t+1}}{h_{t+1} \partial h_t}\right)^T p_{t+1}
+                        \end{equation}
+                        解出$p_t$，而上式右边通过如下公式计算：
+                        \begin{equation}
+                            \left(\ptl{E_{t+1}}{h_{t+1} \partial h_t}\right)^T p_{t+1} = \left(\ptl{g_{t+1}}{h_t}\right)^T p_{t+1} = \ptl{}{h_t}(\tilde{p}_{t+1}^T g_{t+1})
+                        \end{equation}
+                        其中$\tilde{p}$表示计算过程中该参量视为常数，具体计算时先计算括号内的标量，再通过计算图算出关于$h_t$的导数。
+                \end{enumerate}
+
+            \item \textbf{参数梯度计算}:
+                利用公式：
+                \begin{equation}
+                    \partial_t L_\tau := \left(\ptl{^2 E_t}{h_t \partial \theta}\right)^T p_t = \ptl{}{\theta}\left(\tilde{p}_t^T g_t\right)
+                \end{equation}
+                计算出每个时刻的参数梯度，上式计算顺序也是先求出括号内的标量，再通过计算图求导。
+        \end{enumerate}
+
+        最终梯度为；
+        \begin{equation}
+            \frac{\partial L_\tau}{\partial \theta} = \sum_{t=1}^{\tau} \partial_t L_\tau
+        \end{equation}
+
+
+
+
 
 \end{document}
