@@ -150,6 +150,12 @@
         \end{enumerate}
 
 \section{$RL^2$算法与PPO}
-    
+    假设每一次试验(Trial)包含包含M节任务(Epilsode)
+    \subsection{环境交互与数据采集}
+        对于每一次试验，时间步$t = 1, 2, \dots, N$：
+        \begin{enumerate}
+            \item \textbf{输入构建：}$x_t = \phi_{in}(s_t, a_{t-1}, r_{t-1}, d_{t-1})$，其中%
+            $s_t$表示当前输入，$a_{t-1}$为上一步的行动，$r_{t-1}$为上一步的奖励，$d_{t-1}$为当前任务是否结束
+        \end{enumerate}
 
 \end{document}
