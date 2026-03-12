@@ -10,12 +10,11 @@
 
 \begin{document}
 
-\section{RNN网络}
-
+\section{RNN网络(深度平衡)}
     \subsection{理论推导}
         设RNN网络的迭代公式为：
         \begin{equation}
-            h_{t+1} = \underset{s}{argmin}~E(s, h_t, x_t;\theta)
+            h_{t+1} = \underset{h}{argmin}~E(h, h_t, x_t;\theta)
         \end{equation}
         其中：
         \begin{itemize}
@@ -123,8 +122,34 @@
             \frac{\partial L_\tau}{\partial \theta} = \sum_{t=1}^{\tau} \partial_t L_\tau
         \end{equation}
 
+\section{RNN网络(深度展开)}
 
+    \subsection{理论推导}
+    设RNN网络的迭代公式为：
+    \begin{align}
+        h_{t, 0} &= h_t\\
+        h_{t, n+1} &= h_{t, n} - \alpha_{t, n} \ptl{E(h_{t, n}, h_t, x_t;\theta)}{h_{t, n}}\\
+        h_{t+1} &= h_{t, K}
+    \end{align}
+    其中：
+        \begin{itemize}
+            \item $h_t$为t时刻的隐变量
+            \item E为系统的能量函数
+            \item $x_t$为系统t时刻的输入
+            \item $\theta$为系统的可训练参数
+            \item K为中间迭代步数上限
+            \item $\alpha$为迭代步长控制参数
+        \end{itemize}
 
+    \subsection{算法概述}
+        工程实现中，直接用pytorch的计算图构建功能，自动求得损失关于参数的导数。
+        同时为了防止显存溢出，可能需要做以下工程处理：
+        \begin{enumerate}
+            \item \textbf{RNN传播截断：} 计算图中只保留RNN网络的最后若干步
+            \item \textbf{梯度检查：}在前向传播计算那 $K$ 步下降时，不保存中间的激活值，而在反向传播需要计算梯度时，重新计算这 $K$ 步的前向过程来临时获取激活值。
+        \end{enumerate}
 
+\section{$RL^2$算法与PPO}
+    
 
 \end{document}
