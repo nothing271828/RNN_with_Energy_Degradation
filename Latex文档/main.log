@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2026.2.4)  12 MAR 2026 10:42
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2026.2.4)  13 MAR 2026 15:12
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -551,28 +551,36 @@ LaTeX Font Info:    Font shape `TU/SimSun(0)/m/sl' in size <10.53937> not availa
 
 [2]
 
-[3] (./main.aux)
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 153.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `superscript' on input line 153.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 153.
+
+
+
+[3]
+
+[4] (./main.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2022/07/14>
  ***********
-
-
-Package rerunfilecheck Warning: File `main.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `main.out':
-(rerunfilecheck)             Before: EF1FFE7176D7D2516C61CF4B4784EB2F;511
-(rerunfilecheck)             After:  C3AB6484A2A4DB283CC3836E23D9C33A;600.
+Package rerunfilecheck Info: File `main.out' has not changed.
+(rerunfilecheck)             Checksum: 48EBDBA509C5191AD182E5FDEA865D79;922.
  ) 
 Here is how much of TeX's memory you used:
- 15777 strings out of 473832
- 345602 string characters out of 5722143
- 762663 words of memory out of 5000000
- 38632 multiletter control sequences out of 15000+600000
- 565484 words of font info for 88 fonts, out of 8000000 for 9000
+ 15811 strings out of 473832
+ 346249 string characters out of 5722143
+ 763134 words of memory out of 5000000
+ 38655 multiletter control sequences out of 15000+600000
+ 570151 words of font info for 110 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  93i,9n,111p,379b,391s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on main.pdf (3 pages).
+Output written on main.pdf (4 pages).
